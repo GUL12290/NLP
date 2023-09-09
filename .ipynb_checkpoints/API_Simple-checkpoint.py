@@ -3,30 +3,30 @@ import spacy
 import networkx as nx
 import matplotlib
 
-
+# Usa un backend que no requiera interfaz gráfica
 matplotlib.use('Agg')
 
-
+# Luego, importa pyplot
 import matplotlib.pyplot as plt
 
 
 app = Flask(__name__)
 
-
+# Load the spaCy model (you'll need to download it if you haven't already)
 nlp = spacy.load("en_core_web_sm")
 
 def analyze_paragraph(paragraph):
-    
+    # Process the paragraph to tokenize into sentences and analyze linguistic features
     doc = nlp(paragraph)
 
-    
+    # Initialize lists to store named entities and parts of speech
     named_entities = []
     parts_of_speech = []
 
-    
+    # Initialize an empty graph for dependency relationships
     G = nx.Graph()
 
-
+    # Iterate through sentences in the document
     for sent in doc.sents:
         # Named Entities
         sentence_named_entities = []
@@ -34,19 +34,19 @@ def analyze_paragraph(paragraph):
             sentence_named_entities.append(f"{ent.text} ({ent.label_})")
         named_entities.append(sentence_named_entities)
 
-        # Parts of Speech
+        # Words and Parts of Speech
         sentence_parts_of_speech = []
         for token in sent:
             sentence_parts_of_speech.append(f"{token.text} ({token.pos_})")
         parts_of_speech.append(sentence_parts_of_speech)
 
-        # dependency graph
+        # Build the dependency graph
         for token in sent:
             G.add_node(token.text)
             if token.dep_ != "punct":
                 G.add_edge(token.text, token.head.text, label=token.dep_)
 
-  
+    # Draw and save the dependency graph as an image
     pos = nx.spring_layout(G, seed=42)
     edge_labels = {(u, v): d["label"] for u, v, d in G.edges(data=True)}
     nx.draw(G, pos, with_labels=True, node_size=1000, node_color="skyblue", font_size=10)
@@ -56,7 +56,7 @@ def analyze_paragraph(paragraph):
     image_path = "dependency_graph.png"
     plt.savefig(image_path)
 
-
+    # Devuelve las entidades, partes del discurso y la ruta completa del gráfico generado
     return named_entities, parts_of_speech, image_path
 
 @app.route("/", methods=["GET", "POST"])
